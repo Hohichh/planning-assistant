@@ -1,0 +1,74 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype ortho
+left to right direction
+
+entity "users" as users {
+  * id : UUID <<PK>>
+  --
+  * name : VARCHAR
+  created_at : TIMESTAMP
+}
+
+entity "auth_methods" as auth_methods {
+  * id : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>>
+  * provider : VARCHAR
+  * external_id : VARCHAR
+  password_hash : VARCHAR
+  created_at : TIMESTAMP
+  ..
+  UNIQUE(provider, external_id)
+}
+
+
+entity "tasks" as tasks {
+  * id : UUID <<PK>>
+  --
+  * user_id : UUID <<FK>>
+  * title : VARCHAR
+  description : TEXT
+  * deadline : TIMESTAMP
+  * status : VARCHAR
+  created_at : TIMESTAMP
+}
+
+
+
+entity "subtasks" as subtasks {
+  * id : UUID <<PK>>
+  --
+  * task_id : UUID <<FK>>
+  * user_id : UUID <<FK>>
+  * title : VARCHAR
+  * estimated_minutes : INT
+  cognitive_load : VARCHAR
+  sort_order : INT
+  is_completed : BOOLEAN
+  * status : VARCHAR
+  replaces_id : UUID <<FK>>
+  created_at : TIMESTAMP
+}
+
+entity "timeslots" as timeslots {
+  * id : UUID <<PK>>
+  --
+  subtask_id : UUID <<FK>>
+  * user_id : UUID <<FK>>
+  * start_time : TIMESTAMP
+  * end_time : TIMESTAMP
+  * is_committed : BOOLEAN
+  ..
+  EXCLUDE (user_id =, tsrange &&)\n  WHERE (is_committed = true)
+}
+
+users ||--o{ auth_methods 
+users ||--o{ tasks 
+users ||--o{ timeslots
+tasks ||--o{ subtasks
+subtasks |o--o| subtasks
+subtasks ||--o{ timeslots
+@enduml

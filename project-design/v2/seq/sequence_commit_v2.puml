@@ -1,0 +1,59 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam defaultFontName Arial
+
+autonumber "<b>[0]</b>"
+
+actor "Пользователь" as User
+participant "Интерфейс" as UI
+participant "AgentController" as Ctrl
+participant "DraftService" as Draft
+database "PostgreSQL" as DB
+
+== Подтверждение черновика ==
+
+User -> UI : Нажимает "Подтвердить"
+activate UI
+UI -> Ctrl : POST /agent/draft/commit
+activate Ctrl
+Ctrl -> Draft : commitDraft(userId)
+activate Draft
+
+Draft -> DB : UPDATE subtasks\nSET status='scheduled'\nWHERE status='draft'
+Draft -> DB : DELETE subtasks\nWHERE status='pending_delete'
+Draft -> DB : UPDATE timeslots\nSET is_committed=true
+
+DB --> Draft : OK (транзакция)
+Draft --> Ctrl : List<Subtask>
+deactivate Draft
+
+Ctrl --> UI : 200 OK {subtasks[]}
+deactivate Ctrl
+UI --> User : Обновление календаря
+deactivate UI
+
+== Отклонение черновика (альтернатива) ==
+
+User -> UI : Нажимает "Отклонить"
+activate UI
+UI -> Ctrl : POST /agent/draft/reject
+activate Ctrl
+Ctrl -> Draft : rejectDraft(userId)
+activate Draft
+
+Draft -> DB : DELETE subtasks\nWHERE status='draft'
+Draft -> DB : UPDATE subtasks\nSET status='scheduled'\nWHERE status='pending_delete'
+Draft -> DB : DELETE timeslots\nWHERE is_committed=false
+
+DB --> Draft : OK (транзакция)
+Draft --> Ctrl : void
+deactivate Draft
+
+Ctrl --> UI : 204 No Content
+deactivate Ctrl
+UI --> User : Возврат к текущему расписанию
+deactivate UI
+
+@enduml

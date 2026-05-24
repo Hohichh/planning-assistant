@@ -1,0 +1,67 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+interface AgentController <<REST>>
+interface CalendarService <<Service>>
+interface SubtaskRepository <<Repository>>
+interface TimeslotRepository <<Repository>>
+
+class AgentRequest <<DTO>>
+class DraftResponse <<DTO>>
+class SubtaskResponse <<DTO>>
+
+class Subtask <<Entity>>
+class Timeslot <<Entity>>
+class SubtaskDraft <<ValueObject>>
+class ProposedTimeslot <<ValueObject>>
+class AllocationConstraints <<ValueObject>>
+
+interface AgentService <<Service>> {
+    + processRequest(message: String, userId: UUID, taskId: UUID?): DraftResponse
+}
+
+interface DraftService <<Service>> {
+    + createDraftBatch(userId: UUID, drafts: List<SubtaskDraft>): DraftResponse
+    + proposeDraftModification(userId: UUID, subtaskId: UUID, newTimeslot: Timeslot): SubtaskResponse
+    + commitDraft(userId: UUID): List<SubtaskResponse>
+    + rejectDraft(userId: UUID): void
+    + getDraft(userId: UUID): DraftResponse
+}
+
+interface SlotAllocationStrategy <<Strategy>> {
+    + allocate(subtasks: List<Subtask>,\n  occupied: List<Timeslot>,\n  constraints: AllocationConstraints): List<ProposedTimeslot>
+}
+
+interface VectorStore <<Spring AI>> {
+    + add(documents: List<Document>): void
+    + similaritySearch(query: String, topK: Int): List<Document>
+    + delete(ids: List<String>): void
+}
+
+AgentController ..> AgentService
+AgentController ..> DraftService
+
+AgentService ..> CalendarService
+AgentService ..> DraftService
+AgentService ..> SlotAllocationStrategy
+AgentService ..> VectorStore
+AgentService ..> AgentRequest
+AgentService ..> DraftResponse
+
+DraftService ..> SubtaskRepository
+DraftService ..> TimeslotRepository
+DraftService ..> SubtaskDraft
+DraftService ..> DraftResponse
+DraftService ..> SubtaskResponse
+
+SlotAllocationStrategy ..> Subtask
+SlotAllocationStrategy ..> Timeslot
+SlotAllocationStrategy ..> ProposedTimeslot
+SlotAllocationStrategy ..> AllocationConstraints
+
+@enduml

@@ -1,0 +1,55 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam usecase {
+    BackgroundColor white
+    BorderColor black
+    ArrowColor black
+}
+skinparam actor {
+    BackgroundColor white
+    BorderColor black
+}
+
+actor "Пользователь" as User
+
+rectangle "Интеллектуальный персональный ассистент" {
+    
+    ' 1. Интерактивное взаимодействие (Чат)
+    usecase "Взаимодействие с ассистентом" as UC_Chat
+    usecase "Постановка глобальных целей" as UC_Goals
+    usecase "Передача контекста\nдля декомпозиции" as UC_Context
+    
+    UC_Goals .up.> UC_Chat : <<extend>>
+    UC_Context .up.> UC_Chat : <<extend>>
+
+    ' 2. Ручное управление расписанием (CRUD)
+    usecase "Ручное управление\nрасписанием" as UC_Schedule
+    usecase "Создание задачи" as UC_Create
+    usecase "Редактирование задачи" as UC_Edit
+    usecase "Удаление задачи" as UC_Delete
+    usecase "Отметка о выполнении" as UC_Complete
+    
+    UC_Create -up-|> UC_Schedule
+    UC_Edit -up-|> UC_Schedule
+    UC_Delete -up-|> UC_Schedule
+    UC_Complete -up-|> UC_Schedule
+
+    ' 3. Верификация решений (Human-in-the-Loop)
+    usecase "Верификация черновика\nрасписания" as UC_Verify
+    usecase "Утверждение черновика" as UC_Approve
+    usecase "Отклонение черновика" as UC_Reject
+    
+    UC_Approve .up.> UC_Verify : <<extend>>
+    UC_Reject .up.> UC_Verify : <<extend>>
+
+}
+
+' Связи актора с базовыми прецедентами
+User --> UC_Chat
+User --> UC_Schedule
+User --> UC_Verify
+
+
+@enduml

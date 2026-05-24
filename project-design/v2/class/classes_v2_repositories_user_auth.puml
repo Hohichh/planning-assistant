@@ -1,0 +1,46 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+interface UserService <<Service>>
+interface AuthService <<Service>>
+
+class User <<Entity>> {
+    + id: UUID
+    + name: String
+    + created_at: Timestamp
+}
+
+class AuthMethod <<Entity>> {
+    + id: UUID
+    + user_id: UUID
+    + provider: String
+    + external_id: String
+    + password_hash: String?
+    + created_at: Timestamp
+}
+
+interface UserRepository <<Repository>> {
+    + findById(id: UUID): Optional<User>
+    + save(user: User): User
+    + deleteById(id: UUID): void
+}
+
+interface AuthMethodRepository <<Repository>> {
+    + findById(id: UUID): Optional<AuthMethod>
+    + findByUserId(userId: UUID): List<AuthMethod>
+    + save(method: AuthMethod): AuthMethod
+    + deleteById(id: UUID): void
+}
+
+UserService ..> UserRepository
+AuthService ..> AuthMethodRepository
+
+UserRepository --> User
+AuthMethodRepository --> AuthMethod
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam defaultFontName Arial
+
+autonumber "<b>[0]</b>"
+
+actor "Пользователь" as User
+participant "Интерфейс" as UI
+participant "AgentController" as Ctrl
+participant "AgentService" as Agent
+participant "CalendarService" as Calendar
+participant "LLM (ChatClient)" as LLM
+
+User -> UI : Текстовый запрос
+activate UI
+UI -> Ctrl : POST /agent/generate\n{message, task_id?}
+activate Ctrl
+Ctrl -> Agent : processRequest(message, userId, taskId)
+activate Agent
+
+Agent -> Calendar : getOccupiedSlots(userId, dateRange)
+activate Calendar
+Calendar --> Agent : occupiedSlots
+deactivate Calendar
+
+Agent -> Calendar : getTask(taskId)
+Calendar --> Agent : task (deadline, description)
+
+note over Agent : Формирование промпта:\nконтекст + занятость + запрос
+
+Agent -> LLM : prompt (Structured Output)
+activate LLM
+LLM --> Agent : JSON {subtasks[]}
+deactivate LLM
+
+@enduml

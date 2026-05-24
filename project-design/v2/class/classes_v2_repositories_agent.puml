@@ -1,0 +1,78 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+interface AgentService <<Service>>
+interface DraftService <<Service>>
+
+enum SubtaskStatus {
+    DRAFT
+    PENDING_DELETE
+    SCHEDULED
+    COMPLETED
+}
+
+class Subtask <<Entity>> {
+    + id: UUID
+    + task_id: UUID
+    + user_id: UUID
+    + title: String
+    + estimated_minutes: Int
+    + cognitive_load: String?
+    + sort_order: Int
+    + is_completed: Boolean
+    + status: SubtaskStatus
+    + replaces_id: UUID?
+    + created_at: Timestamp
+}
+
+class Timeslot <<Entity>> {
+    + id: UUID
+    + subtask_id: UUID?
+    + user_id: UUID
+    + start_time: Timestamp
+    + end_time: Timestamp
+    + is_committed: Boolean
+}
+
+class Document <<Spring AI>> {
+    + id: String
+    + content: String
+    + metadata: Map<String, Object>
+    + embedding: float[]
+}
+
+interface SubtaskRepository <<Repository>> {
+    + findByUserIdAndStatus(userId: UUID, status: SubtaskStatus): List<Subtask>
+    + findByUserIdAndStatusIn(userId: UUID, statuses: List<SubtaskStatus>): List<Subtask>
+    + saveAll(subtasks: List<Subtask>): List<Subtask>
+    + deleteAllByUserIdAndStatus(userId: UUID, status: SubtaskStatus): void
+}
+
+interface TimeslotRepository <<Repository>> {
+    + findByUserIdAndIsCommitted(userId: UUID, committed: Boolean): List<Timeslot>
+    + saveAll(slots: List<Timeslot>): List<Timeslot>
+    + deleteByUserIdAndIsCommitted(userId: UUID, committed: Boolean): void
+}
+
+interface VectorStore <<Spring AI>> {
+    + add(documents: List<Document>): void
+    + similaritySearch(query: String, topK: Int): List<Document>
+    + delete(ids: List<String>): void
+}
+
+DraftService ..> SubtaskRepository
+DraftService ..> TimeslotRepository
+AgentService ..> VectorStore
+
+SubtaskRepository --> Subtask
+TimeslotRepository --> Timeslot
+VectorStore --> Document
+
+Subtask ..> SubtaskStatus
+
+@enduml

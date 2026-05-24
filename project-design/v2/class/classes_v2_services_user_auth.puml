@@ -1,0 +1,46 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+interface UserController <<REST>>
+interface AuthController <<REST>>
+
+interface UserRepository <<Repository>>
+interface AuthMethodRepository <<Repository>>
+
+class UserRequest <<DTO>>
+class UserResponse <<DTO>>
+class AuthMethodRequest <<DTO>>
+class AuthMethodResponse <<DTO>>
+
+interface UserService <<Service>> {
+    + create(req: UserRequest): UserResponse
+    + getById(id: UUID): UserResponse
+    + update(id: UUID, req: UserRequest): UserResponse
+    + delete(id: UUID): void
+}
+
+interface AuthService <<Service>> {
+    + create(req: AuthMethodRequest): AuthMethodResponse
+    + getById(id: UUID): AuthMethodResponse
+    + getByUserId(userId: UUID): List<AuthMethodResponse>
+    + update(id: UUID, req: AuthMethodRequest): AuthMethodResponse
+    + delete(id: UUID): void
+}
+
+UserController ..> UserService
+AuthController ..> AuthService
+
+UserService ..> UserRequest
+UserService ..> UserResponse
+UserService ..> UserRepository
+
+AuthService ..> AuthMethodRequest
+AuthService ..> AuthMethodResponse
+AuthService ..> AuthMethodRepository
+
+@enduml

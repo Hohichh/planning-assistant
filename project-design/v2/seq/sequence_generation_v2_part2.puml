@@ -1,0 +1,35 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+skinparam defaultFontName Arial
+
+autonumber "<b>[7]</b>"
+
+participant "AgentController" as Ctrl
+participant "AgentService" as Agent
+participant "SlotAllocationStrategy" as Algo
+participant "DraftService" as Draft
+database "PostgreSQL" as DB
+
+activate Agent
+
+Agent -> Algo : allocate(subtasks, occupiedSlots, constraints)
+activate Algo
+Algo --> Agent : List<ProposedTimeslot>
+deactivate Algo
+
+Agent -> Draft : createDraftBatch(userId, subtaskDrafts)
+activate Draft
+Draft -> DB : INSERT subtasks (status=draft)\nINSERT timeslots (is_committed=false)
+DB --> Draft : saved
+Draft --> Agent : DraftResponse
+deactivate Draft
+
+Agent --> Ctrl : DraftResponse
+deactivate Agent
+activate Ctrl
+Ctrl --> Ctrl : 200 OK → UI → Пользователь
+deactivate Ctrl
+
+@enduml

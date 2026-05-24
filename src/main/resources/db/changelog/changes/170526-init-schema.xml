@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+ http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <!-- ===== users ===== -->
+    <changeSet id="170526-create-users-table" author="hohichh">
+        <createTable tableName="users">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+    </changeSet>
+
+    <!-- ===== auth_methods ===== -->
+    <changeSet id="170526-create-auth-methods-table" author="hohichh">
+        <createTable tableName="auth_methods">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provider" type="VARCHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="external_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="VARCHAR(255)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="auth_methods" baseColumnNames="user_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_auth_methods_user"
+                onDelete="CASCADE" onUpdate="CASCADE"/>
+
+        <addUniqueConstraint
+                tableName="auth_methods"
+                columnNames="provider, external_id"
+                constraintName="uq_auth_provider_external"/>
+
+        <createIndex tableName="auth_methods" indexName="idx_auth_methods_user_id">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ===== tasks ===== -->
+    <changeSet id="170526-create-tasks-table" author="hohichh">
+        <createTable tableName="tasks">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="deadline" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="tasks" baseColumnNames="user_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_tasks_user"
+                onDelete="CASCADE" onUpdate="CASCADE"/>
+
+        <createIndex tableName="tasks" indexName="idx_tasks_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex tableName="tasks" indexName="idx_tasks_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ===== subtasks ===== -->
+    <changeSet id="170526-create-subtasks-table" author="hohichh">
+        <createTable tableName="subtasks">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="task_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="estimated_minutes" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cognitive_load" type="VARCHAR(32)"/>
+            <column name="sort_order" type="INT"/>
+            <column name="is_completed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="replaces_id" type="UUID"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="NOW()"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="subtasks" baseColumnNames="task_id"
+                referencedTableName="tasks" referencedColumnNames="id"
+                constraintName="fk_subtasks_task"
+                onDelete="CASCADE" onUpdate="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="subtasks" baseColumnNames="user_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_subtasks_user"
+                onDelete="CASCADE" onUpdate="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="subtasks" baseColumnNames="replaces_id"
+                referencedTableName="subtasks" referencedColumnNames="id"
+                constraintName="fk_subtasks_replaces"
+                onDelete="SET NULL" onUpdate="CASCADE"/>
+
+        <createIndex tableName="subtasks" indexName="idx_subtasks_task_id">
+            <column name="task_id"/>
+        </createIndex>
+
+        <createIndex tableName="subtasks" indexName="idx_subtasks_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex tableName="subtasks" indexName="idx_subtasks_status">
+            <column name="status"/>
+        </createIndex>
+
+        <createIndex tableName="subtasks" indexName="idx_subtasks_user_status">
+            <column name="user_id"/>
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ===== timeslots ===== -->
+    <changeSet id="170526-create-timeslots-table" author="hohichh">
+        <createTable tableName="timeslots">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="subtask_id" type="UUID"/>
+            <column name="user_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_committed" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="timeslots" baseColumnNames="subtask_id"
+                referencedTableName="subtasks" referencedColumnNames="id"
+                constraintName="fk_timeslots_subtask"
+                onDelete="CASCADE" onUpdate="CASCADE"/>
+
+        <addForeignKeyConstraint
+                baseTableName="timeslots" baseColumnNames="user_id"
+                referencedTableName="users" referencedColumnNames="id"
+                constraintName="fk_timeslots_user"
+                onDelete="CASCADE" onUpdate="CASCADE"/>
+
+        <createIndex tableName="timeslots" indexName="idx_timeslots_subtask_id">
+            <column name="subtask_id"/>
+        </createIndex>
+
+        <createIndex tableName="timeslots" indexName="idx_timeslots_user_id">
+            <column name="user_id"/>
+        </createIndex>
+
+        <createIndex tableName="timeslots" indexName="idx_timeslots_user_committed">
+            <column name="user_id"/>
+            <column name="is_committed"/>
+        </createIndex>
+
+        <createIndex tableName="timeslots" indexName="idx_timeslots_user_range">
+            <column name="user_id"/>
+            <column name="start_time"/>
+            <column name="end_time"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ===== btree_gist extension + overlap exclusion constraint ===== -->
+    <changeSet id="170526-add-timeslots-no-overlap" author="hohichh">
+        <sql>CREATE EXTENSION IF NOT EXISTS btree_gist;</sql>
+        <sql>
+            ALTER TABLE timeslots
+            ADD CONSTRAINT no_overlap
+            EXCLUDE USING gist (
+                user_id WITH =,
+                tsrange(start_time, end_time) WITH &amp;&amp;
+            ) WHERE (is_committed = true);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

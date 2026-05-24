@@ -1,0 +1,116 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+enum SubtaskStatus {
+    DRAFT
+    PENDING_DELETE
+    SCHEDULED
+    COMPLETED
+}
+
+enum TaskStatus {
+    ACTIVE
+    COMPLETED
+    ARCHIVED
+}
+
+class TaskRequest <<DTO>> {
+    + title: String
+    + description: String?
+    + deadline: Timestamp
+    + status: String
+}
+
+class TaskResponse <<DTO>> {
+    + id: UUID
+    + user_id: UUID
+    + title: String
+    + description: String?
+    + deadline: Timestamp
+    + status: String
+    + created_at: Timestamp
+}
+
+class SubtaskCreateRequest <<DTO>> {
+    + task_id: UUID
+    + title: String
+    + estimated_minutes: Int
+    + cognitive_load: String?
+    + sort_order: Int?
+    + start_time: Timestamp?
+    + end_time: Timestamp?
+}
+
+class SubtaskUpdateRequest <<DTO>> {
+    + title: String
+    + estimated_minutes: Int
+    + cognitive_load: String?
+    + sort_order: Int?
+}
+
+class TimeslotResponse <<DTO>> {
+    + id: UUID
+    + subtask_id: UUID?
+    + user_id: UUID
+    + start_time: Timestamp
+    + end_time: Timestamp
+    + is_committed: Boolean
+}
+
+class SubtaskResponse <<DTO>> {
+    + id: UUID
+    + task_id: UUID
+    + user_id: UUID
+    + title: String
+    + estimated_minutes: Int
+    + cognitive_load: String?
+    + sort_order: Int
+    + is_completed: Boolean
+    + status: String
+    + replaces_id: UUID?
+    + created_at: Timestamp
+    + timeslot: TimeslotResponse?
+}
+
+class StatusPatch <<DTO>> {
+    + status: String
+}
+
+interface CalendarController <<REST>> {
+    + createTask(req: TaskRequest): TaskResponse
+    + getTasks(): List<TaskResponse>
+    + getTask(id: UUID): TaskResponse
+    + updateTask(id: UUID, req: TaskRequest): TaskResponse
+    + deleteTask(id: UUID): void
+    + createSubtask(req: SubtaskCreateRequest): SubtaskResponse
+    + getSubtask(id: UUID): SubtaskResponse
+    + getSubtasksByTask(taskId: UUID): List<SubtaskResponse>
+    + updateSubtask(id: UUID, req: SubtaskUpdateRequest): SubtaskResponse
+    + patchStatus(id: UUID, patch: StatusPatch): SubtaskResponse
+    + deleteSubtask(id: UUID): void
+    + getTimeslots(from: Timestamp, to: Timestamp): List<TimeslotResponse>
+}
+
+interface CalendarService <<Service>>
+
+CalendarController ..> TaskRequest
+CalendarController ..> TaskResponse
+CalendarController ..> SubtaskCreateRequest
+CalendarController ..> SubtaskUpdateRequest
+CalendarController ..> SubtaskResponse
+CalendarController ..> StatusPatch
+CalendarController ..> TimeslotResponse
+CalendarController ..> CalendarService
+
+TaskRequest ..> TaskStatus
+TaskResponse ..> TaskStatus
+SubtaskResponse ..> SubtaskStatus
+StatusPatch ..> SubtaskStatus
+SubtaskResponse ..> TimeslotResponse
+
+@enduml

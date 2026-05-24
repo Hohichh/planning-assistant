@@ -1,0 +1,60 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+class UserRequest <<DTO>> {
+    + name: String
+}
+
+class UserResponse <<DTO>> {
+    + id: UUID
+    + name: String
+    + created_at: Timestamp
+}
+
+class AuthMethodRequest <<DTO>> {
+    + user_id: UUID
+    + provider: String
+    + external_id: String
+    + password_hash: String?
+}
+
+class AuthMethodResponse <<DTO>> {
+    + id: UUID
+    + user_id: UUID
+    + provider: String
+    + external_id: String
+    + created_at: Timestamp
+}
+
+interface UserController <<REST>> {
+    + createUser(req: UserRequest): UserResponse
+    + getUser(id: UUID): UserResponse
+    + updateUser(id: UUID, req: UserRequest): UserResponse
+    + deleteUser(id: UUID): void
+}
+
+interface AuthController <<REST>> {
+    + createAuthMethod(req: AuthMethodRequest): AuthMethodResponse
+    + getAuthMethod(id: UUID): AuthMethodResponse
+    + getByUserId(userId: UUID): List<AuthMethodResponse>
+    + updateAuthMethod(id: UUID, req: AuthMethodRequest): AuthMethodResponse
+    + deleteAuthMethod(id: UUID): void
+}
+
+interface UserService <<Service>>
+interface AuthService <<Service>>
+
+UserController ..> UserRequest
+UserController ..> UserResponse
+UserController ..> UserService
+
+AuthController ..> AuthMethodRequest
+AuthController ..> AuthMethodResponse
+AuthController ..> AuthService
+
+@enduml

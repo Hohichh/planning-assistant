@@ -1,0 +1,91 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+interface CalendarService <<Service>>
+
+enum TaskStatus {
+    ACTIVE
+    COMPLETED
+    ARCHIVED
+}
+
+enum SubtaskStatus {
+    DRAFT
+    PENDING_DELETE
+    SCHEDULED
+    COMPLETED
+}
+
+class Task <<Entity>> {
+    + id: UUID
+    + user_id: UUID
+    + title: String
+    + description: String?
+    + deadline: Timestamp
+    + status: TaskStatus
+    + created_at: Timestamp
+}
+
+class Subtask <<Entity>> {
+    + id: UUID
+    + task_id: UUID
+    + user_id: UUID
+    + title: String
+    + estimated_minutes: Int
+    + cognitive_load: String?
+    + sort_order: Int
+    + is_completed: Boolean
+    + status: SubtaskStatus
+    + replaces_id: UUID?
+    + created_at: Timestamp
+}
+
+class Timeslot <<Entity>> {
+    + id: UUID
+    + subtask_id: UUID?
+    + user_id: UUID
+    + start_time: Timestamp
+    + end_time: Timestamp
+    + is_committed: Boolean
+}
+
+interface TaskRepository <<Repository>> {
+    + findById(id: UUID): Optional<Task>
+    + findByUserId(userId: UUID): List<Task>
+    + save(task: Task): Task
+    + deleteById(id: UUID): void
+}
+
+interface SubtaskRepository <<Repository>> {
+    + findById(id: UUID): Optional<Subtask>
+    + findByTaskIdOrderBySortOrder(taskId: UUID): List<Subtask>
+    + findByUserIdAndStatus(userId: UUID, status: SubtaskStatus): List<Subtask>
+    + save(subtask: Subtask): Subtask
+    + saveAll(subtasks: List<Subtask>): List<Subtask>
+    + deleteById(id: UUID): void
+}
+
+interface TimeslotRepository <<Repository>> {
+    + findByUserIdAndRange(userId: UUID, from: Timestamp, to: Timestamp): List<Timeslot>
+    + findByUserIdAndIsCommitted(userId: UUID, committed: Boolean): List<Timeslot>
+    + save(slot: Timeslot): Timeslot
+    + saveAll(slots: List<Timeslot>): List<Timeslot>
+}
+
+CalendarService ..> TaskRepository
+CalendarService ..> SubtaskRepository
+CalendarService ..> TimeslotRepository
+
+TaskRepository --> Task
+SubtaskRepository --> Subtask
+TimeslotRepository --> Timeslot
+
+Task ..> TaskStatus
+Subtask ..> SubtaskStatus
+
+@enduml

@@ -1,0 +1,70 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+enum SubtaskStatus {
+    DRAFT
+    PENDING_DELETE
+    SCHEDULED
+    COMPLETED
+}
+
+class TimeslotResponse <<DTO>> {
+    + id: UUID
+    + subtask_id: UUID?
+    + user_id: UUID
+    + start_time: Timestamp
+    + end_time: Timestamp
+    + is_committed: Boolean
+}
+
+class SubtaskResponse <<DTO>> {
+    + id: UUID
+    + task_id: UUID
+    + user_id: UUID
+    + title: String
+    + estimated_minutes: Int
+    + cognitive_load: String?
+    + sort_order: Int
+    + is_completed: Boolean
+    + status: String
+    + replaces_id: UUID?
+    + created_at: Timestamp
+    + timeslot: TimeslotResponse?
+}
+
+class AgentRequest <<DTO>> {
+    + message: String
+    + task_id: UUID?
+}
+
+class DraftResponse <<DTO>> {
+    + subtasks: List<SubtaskResponse>
+    + has_modifications: Boolean
+}
+
+interface AgentController <<REST>> {
+    + generate(req: AgentRequest): DraftResponse
+    + commitDraft(): List<SubtaskResponse>
+    + rejectDraft(): void
+    + getDraft(): DraftResponse
+}
+
+interface AgentService <<Service>>
+interface DraftService <<Service>>
+
+AgentController ..> AgentRequest
+AgentController ..> DraftResponse
+AgentController ..> SubtaskResponse
+AgentController ..> AgentService
+AgentController ..> DraftService
+
+SubtaskResponse ..> SubtaskStatus
+SubtaskResponse ..> TimeslotResponse
+DraftResponse ..> SubtaskResponse
+
+@enduml

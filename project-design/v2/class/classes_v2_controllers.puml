@@ -1,0 +1,109 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+enum SubtaskStatus {
+    DRAFT
+    PENDING_DELETE
+    SCHEDULED
+    COMPLETED
+}
+
+enum TaskStatus {
+    ACTIVE
+    COMPLETED
+    ARCHIVED
+}
+
+class UserRequest <<DTO>>
+class UserResponse <<DTO>>
+class AuthMethodRequest <<DTO>>
+class AuthMethodResponse <<DTO>>
+class TaskRequest <<DTO>>
+class TaskResponse <<DTO>>
+class SubtaskCreateRequest <<DTO>>
+class SubtaskUpdateRequest <<DTO>>
+class SubtaskResponse <<DTO>>
+class StatusPatch <<DTO>>
+class TimeslotResponse <<DTO>>
+class AgentRequest <<DTO>>
+class DraftResponse <<DTO>>
+
+interface UserService <<Service>>
+interface AuthService <<Service>>
+interface CalendarService <<Service>>
+interface AgentService <<Service>>
+interface DraftService <<Service>>
+
+interface UserController <<REST>> {
+    + createUser(req: UserRequest): UserResponse
+    + getUser(id: UUID): UserResponse
+    + updateUser(id: UUID, req: UserRequest): UserResponse
+    + deleteUser(id: UUID): void
+}
+
+interface AuthController <<REST>> {
+    + createAuthMethod(req: AuthMethodRequest): AuthMethodResponse
+    + getAuthMethod(id: UUID): AuthMethodResponse
+    + getByUserId(userId: UUID): List<AuthMethodResponse>
+    + updateAuthMethod(id: UUID, req: AuthMethodRequest): AuthMethodResponse
+    + deleteAuthMethod(id: UUID): void
+}
+
+interface CalendarController <<REST>> {
+    + createTask(req: TaskRequest): TaskResponse
+    + getTasks(): List<TaskResponse>
+    + getTask(id: UUID): TaskResponse
+    + updateTask(id: UUID, req: TaskRequest): TaskResponse
+    + deleteTask(id: UUID): void
+    + createSubtask(req: SubtaskCreateRequest): SubtaskResponse
+    + getSubtask(id: UUID): SubtaskResponse
+    + getSubtasksByTask(taskId: UUID): List<SubtaskResponse>
+    + updateSubtask(id: UUID, req: SubtaskUpdateRequest): SubtaskResponse
+    + patchStatus(id: UUID, patch: StatusPatch): SubtaskResponse
+    + deleteSubtask(id: UUID): void
+    + getTimeslots(from: Timestamp, to: Timestamp): List<TimeslotResponse>
+}
+
+interface AgentController <<REST>> {
+    + generate(req: AgentRequest): DraftResponse
+    + commitDraft(): List<SubtaskResponse>
+    + rejectDraft(): void
+    + getDraft(): DraftResponse
+}
+
+UserController ..> UserRequest
+UserController ..> UserResponse
+UserController ..> UserService
+
+AuthController ..> AuthMethodRequest
+AuthController ..> AuthMethodResponse
+AuthController ..> AuthService
+
+CalendarController ..> TaskRequest
+CalendarController ..> TaskResponse
+CalendarController ..> SubtaskCreateRequest
+CalendarController ..> SubtaskUpdateRequest
+CalendarController ..> SubtaskResponse
+CalendarController ..> StatusPatch
+CalendarController ..> TimeslotResponse
+CalendarController ..> CalendarService
+
+AgentController ..> AgentRequest
+AgentController ..> DraftResponse
+AgentController ..> SubtaskResponse
+AgentController ..> AgentService
+AgentController ..> DraftService
+
+TaskRequest ..> TaskStatus
+TaskResponse ..> TaskStatus
+SubtaskResponse ..> SubtaskStatus
+StatusPatch ..> SubtaskStatus
+SubtaskResponse ..> TimeslotResponse
+DraftResponse ..> SubtaskResponse
+
+@enduml

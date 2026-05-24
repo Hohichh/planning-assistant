@@ -1,0 +1,36 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: planning-db
+    environment:
+      POSTGRES_DB: planning_assistant
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: planning-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: planning_assistant
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      OPEN_ROUTER_API_KEY: ${OPEN_ROUTER_API_KEY}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

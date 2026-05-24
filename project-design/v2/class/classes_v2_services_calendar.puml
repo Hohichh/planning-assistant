@@ -1,0 +1,63 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+left to right direction
+
+interface CalendarController <<REST>>
+interface AgentService <<Service>>
+
+interface TaskRepository <<Repository>>
+interface SubtaskRepository <<Repository>>
+interface TimeslotRepository <<Repository>>
+interface VectorStore <<Spring AI>>
+
+enum SubtaskStatus {
+    DRAFT
+    PENDING_DELETE
+    SCHEDULED
+    COMPLETED
+}
+
+class TaskRequest <<DTO>>
+class TaskResponse <<DTO>>
+class SubtaskCreateRequest <<DTO>>
+class SubtaskUpdateRequest <<DTO>>
+class SubtaskResponse <<DTO>>
+class StatusPatch <<DTO>>
+class TimeslotResponse <<DTO>>
+
+interface CalendarService <<Service>> {
+    + createTask(userId: UUID, req: TaskRequest): TaskResponse
+    + getTasks(userId: UUID): List<TaskResponse>
+    + getTask(id: UUID): TaskResponse
+    + updateTask(id: UUID, req: TaskRequest): TaskResponse
+    + deleteTask(id: UUID): void
+    + createSubtask(userId: UUID, req: SubtaskCreateRequest): SubtaskResponse
+    + getSubtask(id: UUID): SubtaskResponse
+    + getSubtasksByTask(taskId: UUID): List<SubtaskResponse>
+    + updateSubtask(id: UUID, req: SubtaskUpdateRequest): SubtaskResponse
+    + updateStatus(id: UUID, status: SubtaskStatus): SubtaskResponse
+    + deleteSubtask(id: UUID): void
+    + getOccupiedSlots(userId: UUID, from: Timestamp, to: Timestamp): List<TimeslotResponse>
+}
+
+CalendarController ..> CalendarService
+AgentService ..> CalendarService
+
+CalendarService ..> TaskRepository
+CalendarService ..> SubtaskRepository
+CalendarService ..> TimeslotRepository
+CalendarService ..> VectorStore
+
+CalendarService ..> TaskRequest
+CalendarService ..> TaskResponse
+CalendarService ..> SubtaskCreateRequest
+CalendarService ..> SubtaskUpdateRequest
+CalendarService ..> SubtaskResponse
+CalendarService ..> StatusPatch
+CalendarService ..> TimeslotResponse
+
+@enduml
